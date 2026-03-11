@@ -1,0 +1,202 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Represents a person in the family, may or may not have a linked User account
+model FamilyMember {
+  id           String    @id @default(cuid())
+  /// First name of the family member
+  firstName    String
+  /// Last name of the family member
+  lastName     String
+  /// Date of birth
+  dateOfBirth  DateTime?
+  /// Date of death (null if living)
+  dateOfDeath  DateTime?
+  /// Gender: MALE, FEMALE, OTHER
+  gender       Gender
+  /// URL to profile photo
+  photoUrl     String?
+  /// Short biography
+  bio          String?
+  /// Whether the member is currently living
+  isLiving     Boolean   @default(true)
+  /// Optional link to a User account
+  linkedUserId String?   @unique
+
+  /// Relationships where this member is the source (e.g., "parent of")
+  relationshipsFrom Relationship[] @relation("FromMember")
+  /// Relationships where this member is the target (e.g., "child of")
+  relationshipsTo   Relationship[] @relation("ToMember")
+  /// Calendar events associated with this member
+  eventMembers      EventMember[]
+  /// The User account linked to this member
+  linkedUser        User?          @relation("MemberUser")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([lastName])
+}
+
+/// Represents a registered user account
+model User {
+  id             String   @id @default(cuid())
+  /// Email address (unique)
+  email          String   @unique
+  /// Hashed password
+  passwordHash   String
+  /// User role: ADMIN, USER, READ_ONLY
+  role           Role     @default(USER)
+  /// Link to the FamilyMember record
+  familyMemberId String   @unique
+  /// Whether the account is active
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  /// Linked family member record
+  familyMember    FamilyMember   @relation("MemberUser", fields: [familyMemberId], references: [id])
+  /// Permissions granted to this user
+  permissions     UserPermission[] @relation("UserPermissions")
+  /// Permissions this user has granted to others
+  grantedPerms    UserPermission[] @relation("GrantedByUser")
+  /// Refresh tokens for this user
+  refreshTokens   RefreshToken[]
+
+  @@index([email])
+}
+
+/// Stores additional permissions granted to users
+model UserPermission {
+  id            String         @id @default(cuid())
+  /// The user this permission is granted to
+  userId        String
+  /// The permission key
+  permissionKey PermissionKey
+  /// The admin who granted this permission
+  grantedBy     String
+  grantedAt     DateTime       @default(now())
+
+  user          User @relation("UserPermissions", fields: [userId], references: [id], onDelete: Cascade)
+  grantedByUser User @relation("GrantedByUser", fields: [grantedBy], references: [id])
+
+  @@unique([userId, permissionKey])
+  @@index([userId])
+}
+
+/// Represents a relationship between two family members
+model Relationship {
+  id           String           @id @default(cuid())
+  /// The source member of the relationship
+  fromMemberId String
+  /// The target member of the relationship
+  toMemberId   String
+  /// Type of relationship
+  type         RelationshipType
+  /// When the relationship started (e.g., marriage date)
+  startDate    DateTime?
+  /// When the relationship ended (e.g., divorce date)
+  endDate      DateTime?
+
+  fromMember FamilyMember @relation("FromMember", fields: [fromMemberId], references: [id], onDelete: Cascade)
+  toMember   FamilyMember @relation("ToMember", fields: [toMemberId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([fromMemberId, toMemberId, type])
+  @@index([fromMemberId, type])
+  @@index([toMemberId])
+}
+
+/// Represents a calendar event (birthday, anniversary, custom)
+model Event {
+  id             String    @id @default(cuid())
+  /// Event title
+  title          String
+  /// Type of event
+  eventType      EventType
+  /// Event date
+  date           DateTime
+  /// iCal RRULE for recurring events
+  recurrenceRule String?
+  /// Optional description
+  description    String?
+
+  /// Members associated with this event
+  eventMembers EventMember[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([date])
+  @@index([eventType])
+}
+
+/// Join table linking events to family members
+model EventMember {
+  id             String @id @default(cuid())
+  eventId        String
+  familyMemberId String
+
+  event        Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  familyMember FamilyMember @relation(fields: [familyMemberId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, familyMemberId])
+  @@index([eventId])
+  @@index([familyMemberId])
+}
+
+/// Stores refresh tokens for JWT authentication
+model RefreshToken {
+  id         String    @id @default(cuid())
+  /// The user this token belongs to
+  userId     String
+  /// Hashed token value
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  /// When the token was revoked (null if active)
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum Role {
+  ADMIN
+  USER
+  READ_ONLY
+}
+
+enum PermissionKey {
+  CAN_ADD_RELATIVES
+  CAN_EDIT_PROFILE
+}
+
+enum RelationshipType {
+  PARENT_OF
+  SPOUSE_OF
+  SIBLING_OF
+}
+
+enum EventType {
+  BIRTHDAY
+  ANNIVERSARY
+  CUSTOM
+}

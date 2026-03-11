@@ -23,8 +23,9 @@ const upload = (0, multer_1.default)({
     storage,
     limits: { fileSize: env_1.env.MAX_FILE_SIZE },
     fileFilter: (_req, file, cb) => {
-        const allowed = /jpeg|jpg|png|gif|webp/;
-        if (allowed.test(path_1.default.extname(file.originalname).toLowerCase()) && allowed.test(file.mimetype)) {
+        const allowedExts = /^\.(jpeg|jpg|png|gif|webp)$/;
+        const allowedMimes = /^image\/(jpeg|png|gif|webp)$/;
+        if (allowedExts.test(path_1.default.extname(file.originalname).toLowerCase()) && allowedMimes.test(file.mimetype)) {
             cb(null, true);
         }
         else {

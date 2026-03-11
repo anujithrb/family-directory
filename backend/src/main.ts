@@ -13,6 +13,8 @@ import { env } from './config/env';
 import { logger } from './config/logger';
 import { requestLogger } from './middleware/logger.middleware';
 import { errorHandler } from './middleware/error.middleware';
+import { globalRateLimiter } from './middleware/rate-limit.middleware';
+import { csrfProtection } from './middleware/csrf.middleware';
 
 import healthRoutes from './modules/health/health.routes';
 import authRoutes from './modules/auth/auth.routes';
@@ -52,6 +54,12 @@ app.use(compression() as express.RequestHandler);
 
 // Request logging
 app.use(requestLogger);
+
+// Global rate limiting
+app.use(globalRateLimiter);
+
+// CSRF protection for all state-changing requests
+app.use(csrfProtection);
 
 // Swagger setup
 const swaggerOptions: swaggerJsdoc.Options = {

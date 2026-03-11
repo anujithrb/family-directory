@@ -82,6 +82,8 @@ services:
   frontend:
     image: family-directory-frontend:latest
     container_name: family-directory-frontend
+    volumes:
+      - frontend_dist:/usr/share/nginx/html
     deploy:
       resources:
         limits:
@@ -95,6 +97,7 @@ services:
     container_name: family-directory-nginx
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - frontend_dist:/usr/share/nginx/html:ro
     ports:
       - "80:80"
       - "443:443"
@@ -110,6 +113,7 @@ volumes:
   redis_data:
   backend_uploads:
   backend_logs:
+  frontend_dist:
 
 networks:
   family-network:

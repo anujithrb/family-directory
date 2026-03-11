@@ -1,0 +1,22 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Build artifacts
+dist/
+out-tsc/
+
+# Angular cache
+.angular/
+
+# Environment secrets
+src/environments/environment.local.ts
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

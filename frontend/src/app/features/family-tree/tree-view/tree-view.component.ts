@@ -131,10 +131,10 @@ export class TreeViewComponent implements OnInit, OnDestroy {
 
     simulation.on('tick', () => {
       link
-        .attr('x1', (d) => (d.source as SimNode).x!)
-        .attr('y1', (d) => (d.source as SimNode).y!)
-        .attr('x2', (d) => (d.target as SimNode).x!)
-        .attr('y2', (d) => (d.target as SimNode).y!);
+        .attr('x1', (d) => (d.source as unknown as SimNode).x!)
+        .attr('y1', (d) => (d.source as unknown as SimNode).y!)
+        .attr('x2', (d) => (d.target as unknown as SimNode).x!)
+        .attr('y2', (d) => (d.target as unknown as SimNode).y!);
       node.attr('transform', (d) => `translate(${d.x},${d.y})`);
     });
   }

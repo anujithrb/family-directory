@@ -95,14 +95,17 @@ export class TreeViewComponent implements OnInit, OnDestroy {
     }
 
     // Phase 1 – BFS via PARENT_OF only.
-    // Roots are nodes with no parents that also have children (true ancestors).
-    // Falling back to all parentless nodes when no such roots exist.
+    // Roots are nodes with no parents that also have children (true ancestors),
+    // but excluding nodes whose spouses have parents (they are married-in spouses of descendants).
+    // Falling back to all parentless non-married-in nodes when no such roots exist.
+    const isMarriedIntoTree = (id: string): boolean =>
+      (spouseOf.get(id) ?? []).some((spouseId) => parentsOf.has(spouseId));
     const trueRoots = nodes
-      .filter((n) => !parentsOf.has(n.id) && childrenOf.has(n.id))
+      .filter((n) => !parentsOf.has(n.id) && childrenOf.has(n.id) && !isMarriedIntoTree(n.id))
       .map((n) => n.id);
     const roots = trueRoots.length > 0
       ? trueRoots
-      : nodes.filter((n) => !parentsOf.has(n.id)).map((n) => n.id);
+      : nodes.filter((n) => !parentsOf.has(n.id) && !isMarriedIntoTree(n.id)).map((n) => n.id);
     if (roots.length === 0) roots.push(nodes[0].id);
 
     const genLevel = new Map<string, number>();

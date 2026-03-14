@@ -81,7 +81,47 @@ A host with at least **2 GB RAM** (4 GB recommended for headroom) and **20 GB SS
 
 ---
 
-### 3. Railway
+### 3. Hostinger VPS
+
+| Spec (VPS 1 plan) | Value |
+|---|---|
+| vCPUs | 2 (AMD) |
+| RAM | 4 GB |
+| SSD | 50 GB NVMe |
+| Traffic | Unlimited |
+| Price | **~$5–6/month** (promotional) |
+| Provider | [hostinger.com/vps-hosting](https://www.hostinger.com/vps-hosting) |
+
+Hostinger provides standard KVM VPS instances with root access and Docker pre-installed as an optional template. The setup process is identical to Hetzner.
+
+**Pros:**
+- Price-competitive with Hetzner (~$4–6/month for 4 GB RAM)
+- Docker pre-install template available — saves setup time
+- Slightly more storage than Hetzner CX22 (50 GB vs 40 GB)
+- Unlimited traffic allowance
+- 24/7 live chat support (including for server issues)
+- Familiar brand for those who already use Hostinger for web hosting
+- Data centres in US, EU, Asia, South America
+
+**Cons:**
+- Promotional pricing is for the first billing cycle only; renews at the regular rate (~$9/month for 4 GB tier on annual billing)
+- Less well-known in the DevOps/self-hosting community than Hetzner or DigitalOcean
+- Support quality for Linux/Docker troubleshooting can be inconsistent
+- Hetzner is still cheaper at the regular (non-promo) rate
+
+#### Docker on Hostinger — Does It Work?
+
+Yes. Hostinger VPS plans run KVM virtualisation with Ubuntu or Debian support. You can:
+1. Select the **Docker** application template during server creation (Docker Engine is pre-installed), **or**
+2. Install Docker manually with `curl -fsSL https://get.docker.com | sh` (same as any Ubuntu VPS)
+
+Once Docker is installed, the deployment steps are **identical to the Hetzner guide** in this document. Hostinger is a drop-in alternative to Hetzner.
+
+**Summary**: Hostinger is a valid and affordable choice, especially at promotional prices. At regular rates, Hetzner is slightly cheaper and has a stronger reputation among self-hosters. Choose Hostinger if you already have an account there or prefer their support channel.
+
+---
+
+### 4. Railway
 
 | Spec | Value |
 |------|-------|
@@ -107,7 +147,7 @@ A host with at least **2 GB RAM** (4 GB recommended for headroom) and **20 GB SS
 
 ---
 
-### 4. Fly.io
+### 5. Fly.io
 
 | Spec | Value |
 |------|-------|
@@ -131,13 +171,13 @@ A host with at least **2 GB RAM** (4 GB recommended for headroom) and **20 GB SS
 
 ---
 
-### 5. Render
+### 6. Render
 
 | Spec | Value |
 |------|-------|
-| Free tier | Web services sleep after 15 min inactivity |
-| Paid | ~$7/service/month + ~$7 for PostgreSQL + ~$10 for Redis |
-| Total | **~$24–31/month** for this stack |
+| Free / Hobby tier | Web services sleep after 15 min inactivity; 512 MB RAM each |
+| Paid (Starter) | ~$7/service/month + ~$7 for PostgreSQL + external Redis |
+| Total (paid) | **~$17–22/month** for this stack |
 | Provider | [render.com](https://render.com) |
 
 **Pros:**
@@ -153,15 +193,48 @@ A host with at least **2 GB RAM** (4 GB recommended for headroom) and **20 GB SS
 - Free web services sleep — unsuitable for production use
 - Limited filesystem for uploads (disk add-ons are paid)
 
+#### Will Render's Hobby Tier Work?
+
+**Short answer: No — the free/Hobby tier does not meet the app's requirements. The paid Starter tier is feasible but expensive.**
+
+| Requirement | Hobby (Free) | Starter ($7/service) |
+|---|---|---|
+| Backend RAM (needs 512 MB) | 512 MB — right at limit, risks OOM | 512 MB — still tight |
+| PostgreSQL RAM (needs ~256 MB+) | 256 MB — too small for Prisma + active queries | 256 MB Starter — still tight |
+| Redis | ❌ Not available | ❌ Must use external (e.g. Upstash free tier) |
+| Always-on (no sleep) | ❌ Sleeps after 15 min — first request takes 30+ seconds | ✅ Yes |
+| Persistent disk for uploads | ❌ Ephemeral — photo uploads are lost on restart | ✅ Paid disk add-on ($0.25/GB) |
+| Docker Compose | ❌ Not supported | ❌ Not supported |
+
+**What the paid Render setup would cost:**
+
+| Service | Plan | Monthly |
+|---------|------|---------|
+| Backend (Node.js web service) | Starter | $7 |
+| Frontend (Static Site) | Free | $0 |
+| PostgreSQL | Starter | $7 |
+| Redis | External Upstash (free 10K cmds/day) | $0–5 |
+| Persistent disk (uploads) | 10 GB | $2.50 |
+| **Total** | | **~$17–22/month** |
+
+**Key limitations that make Render a poor fit:**
+1. **No Docker Compose**: Each service must be configured separately on Render's dashboard — the existing `docker-compose.prod.yml` cannot be used at all.
+2. **RAM is borderline**: The 512 MB Starter RAM cap for the backend leaves almost no headroom. Node.js + Express + Prisma alone can consume 250–350 MB at idle, leaving very little for request handling.
+3. **PostgreSQL Starter is 256 MB RAM**: Prisma's connection pooler and active queries may hit this ceiling under modest family usage.
+4. **No native Redis**: Render does not offer Redis as a managed service. You must integrate [Upstash](https://upstash.com) (free tier: 10,000 commands/day) or pay for an external provider.
+5. **File uploads**: The backend uploads directory is ephemeral — photo uploads are lost every time Render redeploys the service unless you add a paid persistent disk.
+
+**Verdict**: Render can technically run the app on paid Starter plans, but it requires significant restructuring (no Compose), costs more than a Hetzner VPS, and has tighter resource constraints. The Hobby (free) tier is not viable.
+
 ---
 
-### 6. AWS / GCP / Azure
+### 7. AWS / GCP / Azure
 
-| Provider | Estimated monthly cost |
+| Provider | Estimated monthly cost (post-trial) |
 |----------|----------------------|
 | AWS (EC2 t3.medium + RDS + ElastiCache) | **$60–120/month** |
-| GCP (e2-standard-2 + Cloud SQL + Memorystore) | **$70–130/month** |
-| Azure (B2s + Azure DB + Azure Cache) | **$60–110/month** |
+| GCP (e2-medium + Cloud SQL + Memorystore) | **$50–100/month** |
+| Azure (B2s VM + Azure DB + Azure Cache) | **$60–110/month** |
 
 **Pros:**
 - Enterprise-grade reliability, compliance, and SLAs
@@ -171,8 +244,77 @@ A host with at least **2 GB RAM** (4 GB recommended for headroom) and **20 GB SS
 **Cons:**
 - Massive overkill for a private family directory
 - Complex setup and billing
-- Cost is 15–30× more than a simple VPS
+- Cost is 10–25× more than a simple VPS after the trial ends
 - Steep learning curve
+
+#### Do Free Trials Cover This App?
+
+Each cloud giant offers new-account credits, but they differ significantly in what they cover and for how long.
+
+##### Google Cloud Platform (GCP) — Best Free Trial for This App ✅
+
+| Detail | Value |
+|--------|-------|
+| Trial credit | **$300 USD** |
+| Trial duration | **90 days** |
+| Suitable instance | `e2-medium` (2 vCPU, 4 GB RAM) |
+| Estimated trial cost | ~$25/month on e2-medium + managed services |
+| Trial covers | Full stack: VM + Cloud SQL + Memorystore |
+
+GCP's $300 / 90-day trial is the most generous of the three. An `e2-medium` instance (2 vCPU, 4 GB RAM) costs roughly $25–35/month. With the $300 credit you can run the entire app for the full 90 days and still have credit remaining.
+
+**Running the app on GCP (during trial):**
+- **Compute**: `e2-medium` Compute Engine VM running Docker Compose (same setup as Hetzner) — ~$25/month
+- **Or managed services**: Cloud SQL for PostgreSQL (db-f1-micro, ~$7/month) + Memorystore Redis (basic 1 GB, ~$16/month) + Cloud Run for the backend (~$5/month) — more complex but fully managed
+- **Simplest approach**: Run `docker-compose.prod.yml` on an `e2-medium` VM exactly like the Hetzner guide — the $300 credit covers ~8–10 months of this
+
+**After the trial**: ~$50–100/month for managed services, or ~$25/month for a VM-only approach (comparable to DigitalOcean).
+
+> **Note**: You must add a credit card to activate the trial, but GCP will not charge it until you explicitly upgrade to a paid account.
+
+##### Amazon Web Services (AWS) — Free Tier Does Not Cover This App ⚠️
+
+| Detail | Value |
+|--------|-------|
+| Always-Free tier | EC2 `t2.micro` / `t3.micro` — 1 vCPU, **1 GB RAM only** |
+| 12-month free | Same `t2.micro` / `t3.micro` — still only 1 GB RAM |
+| RDS Free tier | `db.t3.micro` — 1 GB RAM, 20 GB SSD (✅ usable for PostgreSQL) |
+| ElastiCache Free tier | ❌ Not included |
+
+The AWS **always-free** and **12-month** tiers cap compute at `t2.micro` / `t3.micro` with only 1 GB RAM — far below the 2 GB minimum this app needs. Running PostgreSQL (1 GB limit in Compose) alongside the backend (512 MB) on a 1 GB machine will result in constant OOM kills.
+
+There is **no blanket AWS free trial with sufficient RAM** for new accounts. However:
+- **AWS Activate** (startup program): Offers $1,000–$5,000 in credits — requires applying as a startup/company.
+- **AWS Free Tier workaround**: You could use RDS Free Tier for PostgreSQL (saves ~$15/month) and pay only for a `t3.small` (2 GB RAM, ~$15/month) + ElastiCache `cache.t3.micro` (~$12/month) = ~$27/month. This is more expensive than Hetzner and more complex to set up.
+
+**Verdict for AWS**: The free tier is inadequate for this stack. Not recommended unless you have Activate credits.
+
+##### Microsoft Azure — Short Trial, Useful for Testing ⚠️
+
+| Detail | Value |
+|--------|-------|
+| Trial credit | **$200 USD** |
+| Trial duration | **30 days** |
+| 12-month free services | `B1s` VM (1 vCPU, **1 GB RAM**) — too small |
+| Suitable paid VM | `B2s` (2 vCPU, 4 GB RAM) — ~$35/month |
+| PostgreSQL free tier | `B1ms` — 1 vCPU, 2 GB RAM, 32 GB (✅ 750 hours/month for 12 months) |
+| Redis free tier | ❌ Not included in 12-month free services |
+
+The $200 / 30-day credit is enough to test the full app for a month on a `B2s` VM (running Docker Compose). After 30 days, costs jump to ~$60–110/month for managed services.
+
+The 12-month free `B1s` VM (1 GB RAM) is too small. The free PostgreSQL Flexible Server (12 months) is useful if you choose Azure long-term.
+
+**Verdict for Azure**: Good for a 30-day test drive, not practical for ongoing use.
+
+##### Cloud Free Trial Summary
+
+| Provider | Trial Value | Duration | Covers This App? | After Trial |
+|---|---|---|---|---|
+| **GCP** | $300 | 90 days | ✅ Yes — e2-medium + full stack | ~$50–100/month |
+| **Azure** | $200 | 30 days | ✅ Yes — B2s VM for testing | ~$60–110/month |
+| **AWS** | 12-month free | Always | ❌ No — VM RAM too small (1 GB) | ~$60–120/month |
+
+**If you want to try the app on a major cloud for free, use GCP** — the $300 credit over 90 days gives you the most runway. Spin up an `e2-medium` VM, follow the same Hetzner deployment steps (they are identical for any Ubuntu VPS), and you will not be charged during the trial.
 
 ---
 
@@ -181,11 +323,16 @@ A host with at least **2 GB RAM** (4 GB recommended for headroom) and **20 GB SS
 | Provider | Monthly Cost | RAM | Setup Difficulty | Docker Compose Support |
 |----------|-------------|-----|-----------------|----------------------|
 | **Hetzner CX22** ⭐ | **~$4** | 4 GB | Medium | ✅ Direct |
+| Hostinger VPS 1 | ~$5–6 (promo), ~$9 (regular) | 4 GB | Medium | ✅ Direct |
 | DigitalOcean Droplet | ~$18 | 4 GB | Medium | ✅ Direct |
 | Railway | ~$10–25 | Managed | Easy | ⚠️ Partial |
 | Fly.io | ~$10–20 | Managed | Medium | ⚠️ Partial |
-| Render | ~$24–31 | Managed | Easy | ❌ No |
-| AWS/GCP/Azure | $60–130 | Managed | Hard | ⚠️ Partial |
+| Render (paid Starter) | ~$17–22 | 512 MB/service | Easy | ❌ No |
+| Render (Hobby/Free) | **Free but unusable** | 512 MB/service | Easy | ❌ No |
+| GCP (trial) | Free for 90 days ($300 credit) | 4 GB (e2-medium) | Hard | ✅ On VM |
+| Azure (trial) | Free for 30 days ($200 credit) | 4 GB (B2s) | Hard | ✅ On VM |
+| AWS (free tier) | ❌ Insufficient RAM (1 GB max) | 1 GB | Hard | ⚠️ Partial |
+| AWS/GCP/Azure (post-trial) | $50–130 | Managed | Hard | ⚠️ Partial |
 
 ---
 

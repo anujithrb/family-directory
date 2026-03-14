@@ -1,3 +1,4 @@
+import { Role } from '@prisma/client';
 import { prisma } from '../../config/prisma';
 import { redis } from '../../config/redis';
 
@@ -39,6 +40,16 @@ export class FamilyTreeService {
 
     const [members, relationships] = await Promise.all([
       prisma.familyMember.findMany({
+        where: {
+          NOT: {
+            AND: [
+              // Exclude members who are admin users with no family relationships
+              { linkedUser: { role: Role.ADMIN } },
+              { relationshipsFrom: { none: {} } },
+              { relationshipsTo: { none: {} } },
+            ],
+          },
+        },
         select: {
           id: true,
           firstName: true,
@@ -61,9 +72,14 @@ export class FamilyTreeService {
       }),
     ]);
 
+    const memberIds = new Set(members.map((m) => m.id));
+    const filteredEdges = relationships.filter(
+      (e) => memberIds.has(e.fromMemberId) && memberIds.has(e.toMemberId),
+    );
+
     const tree: FamilyTreeData = {
       nodes: members,
-      edges: relationships,
+      edges: filteredEdges,
     };
 
     await redis.setex(CACHE_KEY, CACHE_TTL, JSON.stringify(tree));

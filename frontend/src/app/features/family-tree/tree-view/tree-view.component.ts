@@ -8,8 +8,6 @@ import * as d3 from 'd3';
 import { TreeActions, TreeNode, TreeEdge } from '../../../core/store/tree/tree.actions';
 import { selectTreeNodes, selectTreeEdges, selectTreeLoading } from '../../../core/store/tree/tree.selectors';
 
-interface SimNode extends TreeNode, d3.SimulationNodeDatum {}
-
 @Component({
   selector: 'app-tree-view',
   standalone: true,
@@ -77,65 +75,184 @@ export class TreeViewComponent implements OnInit, OnDestroy {
       .on('zoom', (event) => g.attr('transform', event.transform));
     svg.call(zoom);
 
+    if (nodes.length === 0) return;
+
+    // Build parent↔child and spouse adjacency maps
     const parentEdges = edges.filter((e) => e.type === 'PARENT_OF');
-    const spouseEdges = edges.filter((e) => e.type === 'SPOUSE_OF');
+    const childrenOf = new Map<string, string[]>();
+    const parentsOf = new Map<string, string[]>();
+    for (const e of parentEdges) {
+      if (!childrenOf.has(e.fromMemberId)) childrenOf.set(e.fromMemberId, []);
+      childrenOf.get(e.fromMemberId)!.push(e.toMemberId);
+      if (!parentsOf.has(e.toMemberId)) parentsOf.set(e.toMemberId, []);
+      parentsOf.get(e.toMemberId)!.push(e.fromMemberId);
+    }
 
-    const simNodes: SimNode[] = nodes.map((n) => ({ ...n }));
+    const spouseOf = new Map<string, string[]>();
+    for (const e of edges.filter((e) => e.type === 'SPOUSE_OF')) {
+      if (!spouseOf.has(e.fromMemberId)) spouseOf.set(e.fromMemberId, []);
+      spouseOf.get(e.fromMemberId)!.push(e.toMemberId);
+    }
 
-    const links = [
-      ...parentEdges.map((e) => ({ source: e.fromMemberId, target: e.toMemberId, type: 'parent' })),
-      ...spouseEdges
-        .filter((e) => e.fromMemberId < e.toMemberId)
-        .map((e) => ({ source: e.fromMemberId, target: e.toMemberId, type: 'spouse' })),
-    ];
+    // Phase 1 – BFS via PARENT_OF only.
+    // Roots are nodes with no parents that also have children (true ancestors).
+    // Falling back to all parentless nodes when no such roots exist.
+    const trueRoots = nodes
+      .filter((n) => !parentsOf.has(n.id) && childrenOf.has(n.id))
+      .map((n) => n.id);
+    const roots = trueRoots.length > 0
+      ? trueRoots
+      : nodes.filter((n) => !parentsOf.has(n.id)).map((n) => n.id);
+    if (roots.length === 0) roots.push(nodes[0].id);
 
-    const simulation = d3.forceSimulation<SimNode>(simNodes)
-      .force('link', d3.forceLink<SimNode, typeof links[0]>(links)
-        .id((d) => d.id)
-        .distance((d) => d.type === 'spouse' ? 80 : 120))
-      .force('charge', d3.forceManyBody().strength(-200))
-      .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('y', d3.forceY().strength(0.1));
+    const genLevel = new Map<string, number>();
+    roots.forEach((id) => genLevel.set(id, 0));
+    const queue: string[] = [...roots];
 
-    const link = g.append('g').selectAll('line').data(links).enter().append('line')
-      .attr('stroke', (d) => d.type === 'spouse' ? '#e91e63' : '#1a73e8')
-      .attr('stroke-width', (d) => d.type === 'spouse' ? 2 : 1.5)
-      .attr('stroke-dasharray', (d) => d.type === 'spouse' ? '5,3' : 'none');
+    while (queue.length > 0) {
+      const id = queue.shift()!;
+      const gen = genLevel.get(id)!;
+      for (const childId of (childrenOf.get(id) ?? [])) {
+        if (!genLevel.has(childId)) {
+          genLevel.set(childId, gen + 1);
+          queue.push(childId);
+        }
+      }
+    }
 
-    const node = g.append('g').selectAll<SVGGElement, SimNode>('g').data(simNodes).enter().append('g')
+    // Phase 2 – propagate generation to spouses not yet assigned
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const [id, gen] of genLevel) {
+        for (const spouseId of (spouseOf.get(id) ?? [])) {
+          if (!genLevel.has(spouseId)) {
+            genLevel.set(spouseId, gen);
+            changed = true;
+          }
+        }
+      }
+    }
+
+    // Phase 3 – any remaining disconnected nodes get their own rows
+    let maxGen = 0;
+    for (const g of genLevel.values()) { if (g > maxGen) maxGen = g; }
+    for (const n of nodes) {
+      if (!genLevel.has(n.id)) {
+        genLevel.set(n.id, ++maxGen);
+      }
+    }
+
+    // Group nodes by generation; place spouses next to each other
+    const byGen = new Map<number, string[]>();
+    for (const [id, gen] of genLevel) {
+      if (!byGen.has(gen)) byGen.set(gen, []);
+      byGen.get(gen)!.push(id);
+    }
+
+    for (const [gen, ids] of byGen) {
+      const sorted: string[] = [];
+      const seen = new Set<string>();
+      for (const id of ids) {
+        if (seen.has(id)) continue;
+        sorted.push(id);
+        seen.add(id);
+        for (const spouseId of (spouseOf.get(id) ?? [])) {
+          if (!seen.has(spouseId) && ids.includes(spouseId)) {
+            sorted.push(spouseId);
+            seen.add(spouseId);
+          }
+        }
+      }
+      byGen.set(gen, sorted);
+    }
+
+    // Compute pixel positions
+    const NODE_R = 28;
+    const H_GAP = 110;
+    const V_GAP = 160;
+
+    const maxNodesInRow = (() => { let m = 0; for (const a of byGen.values()) { if (a.length > m) m = a.length; } return m; })();
+    const treeWidth = Math.max(width, maxNodesInRow * H_GAP + H_GAP);
+    const treeHeight = (maxGen + 1) * V_GAP;
+
+    const pos = new Map<string, { x: number; y: number }>();
+    for (const [gen, ids] of byGen) {
+      const rowWidth = (ids.length - 1) * H_GAP;
+      const startX = treeWidth / 2 - rowWidth / 2;
+      ids.forEach((id, i) => {
+        pos.set(id, { x: startX + i * H_GAP, y: (gen + 0.5) * V_GAP });
+      });
+    }
+
+    // Draw edges
+    const linkGroup = g.append('g');
+
+    for (const e of parentEdges) {
+      const s = pos.get(e.fromMemberId);
+      const t = pos.get(e.toMemberId);
+      if (!s || !t) continue;
+      const midY = (s.y + t.y) / 2;
+      linkGroup.append('path')
+        .attr('d', `M${s.x},${s.y + NODE_R} C${s.x},${midY} ${t.x},${midY} ${t.x},${t.y - NODE_R}`)
+        .attr('fill', 'none')
+        .attr('stroke', '#1a73e8')
+        .attr('stroke-width', 1.5);
+    }
+
+    for (const e of edges.filter((e) => e.type === 'SPOUSE_OF' && e.fromMemberId < e.toMemberId)) {
+      const s = pos.get(e.fromMemberId);
+      const t = pos.get(e.toMemberId);
+      if (!s || !t) continue;
+      linkGroup.append('line')
+        .attr('x1', s.x).attr('y1', s.y)
+        .attr('x2', t.x).attr('y2', t.y)
+        .attr('stroke', '#e91e63')
+        .attr('stroke-width', 2)
+        .attr('stroke-dasharray', '5,3');
+    }
+
+    // Draw nodes
+    const nodeG = g.append('g')
+      .selectAll<SVGGElement, TreeNode>('g')
+      .data(nodes)
+      .enter()
+      .append('g')
+      .attr('transform', (d) => {
+        const p = pos.get(d.id) ?? { x: 0, y: 0 };
+        return `translate(${p.x},${p.y})`;
+      })
       .style('cursor', 'pointer')
-      .on('click', (_event, d) => this.router.navigate(['/directory', d.id]))
-      .call(d3.drag<SVGGElement, SimNode>()
-        .on('start', (event, d) => {
-          if (!event.active) simulation.alphaTarget(0.3).restart();
-          d.fx = d.x; d.fy = d.y;
-        })
-        .on('drag', (event, d) => { d.fx = event.x; d.fy = event.y; })
-        .on('end', (event, d) => {
-          if (!event.active) simulation.alphaTarget(0);
-          d.fx = null; d.fy = null;
-        }));
+      .on('click', (_evt, d) => this.router.navigate(['/directory', d.id]));
 
-    node.append('circle')
-      .attr('r', 28)
+    nodeG.append('circle')
+      .attr('r', NODE_R)
       .attr('fill', (d) => d.gender === 'MALE' ? '#90caf9' : d.gender === 'FEMALE' ? '#f48fb1' : '#a5d6a7')
       .attr('stroke', (d) => d.isLiving ? '#1a73e8' : '#9e9e9e')
       .attr('stroke-width', 2)
       .attr('opacity', (d) => d.isLiving ? 1 : 0.6);
 
-    node.append('text')
-      .attr('text-anchor', 'middle').attr('dy', '0.35em').attr('font-size', '10px')
+    nodeG.append('text')
+      .attr('text-anchor', 'middle')
+      .attr('dy', '0.35em')
+      .attr('font-size', '10px')
       .text((d) => d.firstName.substring(0, 6));
 
-    node.append('title').text((d) => `${d.firstName} ${d.lastName}`);
+    nodeG.append('text')
+      .attr('text-anchor', 'middle')
+      .attr('y', NODE_R + 14)
+      .attr('font-size', '11px')
+      .attr('fill', '#333')
+      .text((d) => `${d.firstName} ${d.lastName}`);
 
-    simulation.on('tick', () => {
-      link
-        .attr('x1', (d) => (d.source as unknown as SimNode).x!)
-        .attr('y1', (d) => (d.source as unknown as SimNode).y!)
-        .attr('x2', (d) => (d.target as unknown as SimNode).x!)
-        .attr('y2', (d) => (d.target as unknown as SimNode).y!);
-      node.attr('transform', (d) => `translate(${d.x},${d.y})`);
-    });
+    nodeG.append('title').text((d) => `${d.firstName} ${d.lastName}`);
+
+    // Fit and centre the tree in the viewport on initial render
+    const scaleX = width / treeWidth;
+    const scaleY = height / treeHeight;
+    const initScale = Math.min(1, scaleX, scaleY) * 0.9;
+    const tx = width / 2 - (treeWidth / 2) * initScale;
+    const ty = height / 2 - (treeHeight / 2) * initScale;
+    svg.call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(initScale));
   }
 }

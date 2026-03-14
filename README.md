@@ -8,7 +8,7 @@ A private family web application with a contact directory, family tree, calendar
 graph TB
     Browser["Browser / PWA"]
     Nginx["Nginx Reverse Proxy"]
-    Angular["Angular 19 Frontend\n(SPA + Service Worker)"]
+    Angular["Angular 21 Frontend\n(SPA + Service Worker)"]
     Express["Express 5 API\n(Node.js 22 + TypeScript)"]
     PostgreSQL["PostgreSQL 16\n(Primary DB)"]
     Redis["Redis 7\n(Cache + JWT Blocklist)"]
@@ -94,8 +94,9 @@ make up
 | `UPLOAD_DIR` | File upload directory | `uploads` | No |
 | `MAX_FILE_SIZE` | Max upload bytes | `5242880` | No |
 | `RATE_LIMIT_WINDOW_MS` | Rate limit window (ms) | `900000` | No |
-| `RATE_LIMIT_MAX` | Max requests per window | `5` | No |
+| `RATE_LIMIT_MAX` | Max auth requests per window (login/register/refresh) | `5` | No |
 | `LOG_LEVEL` | Winston log level | `info` | No |
+| `LOG_DIR` | Directory for rotating log files | `logs` | No |
 | `POSTGRES_USER` | DB username | `postgres` | No |
 | `POSTGRES_PASSWORD` | DB password | — | **Yes (prod)** |
 | `POSTGRES_DB` | DB name | `family_directory` | No |
@@ -154,6 +155,11 @@ make up
 | POST | `/:id/permissions` | Grant permission |
 | DELETE | `/:id/permissions` | Revoke permission |
 
+### Files (`/api/files`)
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/:filename` | Serve an uploaded file by filename |
+
 ### Health (`/api/health`)
 | Method | Path | Description |
 |--------|------|-------------|
@@ -175,6 +181,23 @@ make shell-backend  # Shell into backend container
 make shell-db       # Open psql shell
 make pwa-assets     # Generate PWA icons/splash screens
 ```
+
+## Security
+
+### CSRF Protection
+The API uses the **double-submit cookie pattern** compatible with Angular's built-in `HttpClientXsrfModule`:
+1. `GET` requests receive an `XSRF-TOKEN` cookie (readable by JavaScript)
+2. State-changing requests (`POST`, `PATCH`, `DELETE`, etc.) must include an `X-XSRF-TOKEN` header whose value matches the cookie
+3. Auth endpoints (`/api/auth/*`) are exempt — they rely on `httpOnly` cookies
+4. Requests using a `Bearer` token are also exempt (Bearer auth is not CSRF-vulnerable)
+
+### Rate Limiting
+Two separate rate limiters are in place:
+
+| Limiter | Applies to | Window | Default max |
+|---------|-----------|--------|-------------|
+| Global | All API routes (except `/api/docs`) | `RATE_LIMIT_WINDOW_MS` | 1000 requests |
+| Auth | `/api/auth/register`, `/login`, `/refresh` | `RATE_LIMIT_WINDOW_MS` | `RATE_LIMIT_MAX` (default 5) |
 
 ## PWA Notes
 

@@ -19,8 +19,8 @@ up:
 
 # Stop all services
 down:
-	docker compose down
-	docker compose -f docker-compose.prod.yml down 2>/dev/null || true
+	-docker compose down
+	-docker compose -f docker-compose.prod.yml down
 
 # Tail logs
 logs:
@@ -40,9 +40,9 @@ test:
 
 # Clean all volumes and images
 clean:
-	docker compose down -v
-	docker compose -f docker-compose.prod.yml down -v 2>/dev/null || true
-	docker rmi family-directory-backend:latest family-directory-frontend:latest 2>/dev/null || true
+	-docker compose down -v
+	-docker compose -f docker-compose.prod.yml down -v
+	-docker rmi family-directory-backend:latest family-directory-frontend:latest
 
 # Open shell in backend container
 shell-backend:

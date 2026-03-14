@@ -1,6 +1,6 @@
 import { prisma } from '../../config/prisma';
 import { User, RefreshToken } from '@prisma/client';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 export class AuthRepository {
   /**

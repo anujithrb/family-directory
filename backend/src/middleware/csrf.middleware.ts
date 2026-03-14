@@ -31,6 +31,13 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction):
     return next();
   }
 
+  // Exempt all auth endpoints from CSRF (they use httpOnly cookies)
+  const authPrefix = `${env.API_PREFIX}/auth`;
+  const isAuthPath = req.path.startsWith(authPrefix);
+  if (isAuthPath) {
+    return next();
+  }
+
   // For state-changing methods: Bearer token endpoints are CSRF-safe
   if (req.headers['authorization']?.startsWith('Bearer ')) {
     return next();

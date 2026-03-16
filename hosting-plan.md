@@ -228,7 +228,213 @@ Once Docker is installed, the deployment steps are **identical to the Hetzner gu
 
 ---
 
-### 7. AWS / GCP / Azure
+### 7. Supabase (Database only — free tier) ✅
+
+Supabase provides a managed PostgreSQL database that is 100% compatible with this project. Because the app already uses PostgreSQL + Prisma, swapping the local container for Supabase requires only a connection-string change — no schema, query, or ORM changes are needed.
+
+| Spec (Free tier) | Value |
+|---|---|
+| PostgreSQL version | 15 (compatible with schema targeting PG 16) |
+| Database storage | **500 MB** |
+| Bandwidth | 5 GB / month |
+| Pooler (PgBouncer) | ✅ Included (Transaction mode) |
+| Project pausing | ⚠️ Pauses after **1 week of inactivity** |
+| Backups | Daily point-in-time backups (7-day retention) |
+| Price | **Free** |
+| Provider | [supabase.com](https://supabase.com) |
+
+#### Will the Database Fit on the Free Tier?
+
+**Yes.** The schema has 7 tables (FamilyMember, User, UserPermission, Relationship, Event, EventMember, RefreshToken). For a typical family directory with 10–200 members the total database size will be well under 10 MB — far inside the 500 MB free-tier limit.
+
+| Table | Rows (typical family) | Est. size |
+|---|---|---|
+| FamilyMember | 10–200 | < 1 MB |
+| User | 10–50 | < 1 MB |
+| Relationship | 20–500 | < 1 MB |
+| Event | 20–200 | < 1 MB |
+| EventMember | 20–400 | < 1 MB |
+| RefreshToken | < 100 (rotated) | < 1 MB |
+| **Total** | | **≪ 10 MB** |
+
+#### Compatibility Matrix
+
+| Feature | Self-hosted PG | Supabase Free |
+|---|---|---|
+| Prisma ORM | ✅ | ✅ |
+| `prisma migrate deploy` | ✅ | ✅ (via `DIRECT_URL`) |
+| All schema types (enums, indexes, cascades) | ✅ | ✅ |
+| Connection pooling | N/A | ✅ PgBouncer included |
+| Automatic backups | ❌ manual script | ✅ daily (7 days) |
+| Always-on (no sleep) | ✅ | ⚠️ Pauses after 1 week |
+| Storage limit | Disk-bound | 500 MB |
+| Monthly cost | Included in VPS | **Free** |
+
+#### Key Limitation — Project Pausing
+
+Supabase free-tier projects are **paused after 7 days with no database activity**. For a private family app that is accessed regularly this is usually not a problem. If you need the database always-on, upgrade to the Supabase Pro plan ($25/month) or keep the project active with a cron-based health-check ping.
+
+#### Architecture with Supabase
+
+When using Supabase the local PostgreSQL container is removed from the stack. The rest of the app (backend Node.js, Redis, Nginx, frontend) runs unchanged on the same VPS:
+
+```
+Internet → Nginx → Angular SPA
+                 → Express API → Redis (local)
+                              → Supabase PostgreSQL (remote, free)
+```
+
+The backend uses **two connection strings**:
+
+| Variable | Purpose | URL format |
+|---|---|---|
+| `DATABASE_URL` | App queries (via PgBouncer Transaction pooler) | `postgresql://postgres.[ref]:[pass]@aws-0-[region].pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1` |
+| `DIRECT_URL` | Prisma CLI migrations only | `postgresql://postgres:[pass]@db.[ref].supabase.co:5432/postgres` |
+
+This is the standard [Prisma + Supabase integration](https://supabase.com/docs/guides/database/prisma) pattern. Both variables are already wired into the Prisma schema (`schema.prisma`) and all Docker Compose files.
+
+---
+
+### Step-by-Step: Supabase Free-Tier Database Setup
+
+#### Prerequisites
+
+- A [Supabase account](https://supabase.com) (free — no credit card required)
+- The app deployed on a VPS (or locally) following the Hetzner guide
+
+---
+
+#### 1 — Create a Supabase project
+
+1. Log in to [app.supabase.com](https://app.supabase.com).
+2. Click **New project**.
+3. Choose a name (e.g. `family-directory`), region closest to your users, and a strong database password. **Save the password** — you will need it.
+4. Wait ~2 minutes for the project to provision.
+
+---
+
+#### 2 — Get your connection strings
+
+In the Supabase dashboard go to **Project Settings → Database → Connection string**.
+
+Copy both connection strings:
+
+**Transaction pooler** (use this for `DATABASE_URL`):
+```
+postgresql://postgres.[project-ref]:[db-password]@aws-0-[region].pooler.supabase.com:6543/postgres
+```
+
+**Direct connection** (use this for `DIRECT_URL`):
+```
+postgresql://postgres:[db-password]@db.[project-ref].supabase.co:5432/postgres
+```
+
+> **Where to find the values**:
+> - **Transaction pooler URL** (`DATABASE_URL`): Dashboard → Project Settings → Database → *Connection string* tab → select **Transaction** mode (port 6543).
+> - **Direct connection URL** (`DIRECT_URL`): Same tab → select **Direct connection** (port 5432, no pooler).
+> Copy each URL and replace the `[db-password]` placeholder with the password you set when creating the project.
+
+---
+
+#### 3 — Update your `.env`
+
+On the VPS (or locally), edit your `.env` file:
+
+```dotenv
+# Remove or comment out self-hosted postgres values
+# POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB are no longer needed
+
+# Supabase connection strings
+DATABASE_URL=postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1
+DIRECT_URL=postgresql://postgres:[password]@db.[project-ref].supabase.co:5432/postgres
+```
+
+---
+
+#### 4 — Build and start the stack (without local postgres)
+
+```bash
+cd ~/family-directory
+
+# Build images (same as normal)
+make build
+
+# Start stack using the Supabase compose file (no local postgres container)
+make supabase-up
+```
+
+Verify containers:
+
+```bash
+docker compose -f docker-compose.supabase.yml ps
+```
+
+Expected output — note that `family-directory-postgres` is **absent**:
+
+```
+NAME                         STATUS
+family-directory-redis       running (healthy)
+family-directory-backend     running (healthy)
+family-directory-frontend    running
+family-directory-nginx       running
+```
+
+---
+
+#### 5 — Run migrations against Supabase
+
+```bash
+make supabase-migrate
+```
+
+This runs `prisma migrate deploy` inside the backend container. Prisma uses `DIRECT_URL` to connect directly to Supabase (bypassing PgBouncer) and applies all pending migrations.
+
+---
+
+#### 6 — (Optional) Seed demo data
+
+```bash
+make supabase-seed
+```
+
+---
+
+#### 7 — Verify
+
+```bash
+curl http://localhost/api/health
+# {"status":"ok","checks":{"database":"ok","redis":"ok"}}
+```
+
+You can also inspect the data in the Supabase **Table Editor** (dashboard → Table Editor).
+
+---
+
+#### Updating the App
+
+```bash
+git pull origin main
+make build
+make supabase-up
+make supabase-migrate
+```
+
+---
+
+#### Supabase Cost Summary
+
+| Item | Monthly Cost |
+|---|---|
+| Supabase (database) | **Free** |
+| Hetzner CX22 VPS (backend + Redis + Nginx) | ~$4 |
+| Domain + SSL | ~$1 |
+| **Total** | **~$5/month** |
+
+This is the same total as the all-in-one Hetzner setup, but offloads database management (backups, updates, monitoring) to Supabase.
+
+---
+
+### 8. AWS / GCP / Azure
 
 | Provider | Estimated monthly cost (post-trial) |
 |----------|----------------------|
@@ -323,6 +529,7 @@ The 12-month free `B1s` VM (1 GB RAM) is too small. The free PostgreSQL Flexible
 | Provider | Monthly Cost | RAM | Setup Difficulty | Docker Compose Support |
 |----------|-------------|-----|-----------------|----------------------|
 | **Hetzner CX22** ⭐ | **~$4** | 4 GB | Medium | ✅ Direct |
+| **Hetzner CX22 + Supabase DB** ✅ | **~$5** | 4 GB | Medium | ✅ `docker-compose.supabase.yml` |
 | Hostinger VPS 1 | ~$5–6 (promo), ~$9 (regular) | 4 GB | Medium | ✅ Direct |
 | DigitalOcean Droplet | ~$18 | 4 GB | Medium | ✅ Direct |
 | Railway | ~$10–25 | Managed | Easy | ⚠️ Partial |

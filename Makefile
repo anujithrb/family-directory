@@ -1,4 +1,4 @@
-.PHONY: dev build up down logs migrate seed test clean shell-backend shell-db pwa-assets
+.PHONY: dev build up down logs migrate seed test clean shell-backend shell-db pwa-assets supabase-up supabase-migrate supabase-seed
 
 # Development
 dev:
@@ -56,3 +56,17 @@ shell-db:
 pwa-assets:
 	cd frontend && npx pwa-asset-generator assets/icons/source-icon.svg assets/icons \
 		--index src/index.html --manifest src/manifest.webmanifest
+
+# ── Supabase targets ──────────────────────────────────────────────────────────
+
+# Start stack without local postgres (uses Supabase for the database)
+supabase-up:
+	docker compose -f docker-compose.supabase.yml up -d
+
+# Run DB migrations against Supabase (uses DIRECT_URL from .env)
+supabase-migrate:
+	docker compose -f docker-compose.supabase.yml exec backend npx prisma migrate deploy
+
+# Seed the Supabase database with demo data
+supabase-seed:
+	docker compose -f docker-compose.supabase.yml exec backend npm run prisma:seed

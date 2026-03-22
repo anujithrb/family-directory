@@ -14,7 +14,7 @@ const envSchema = z.object({
   UPLOAD_DIR: z.string().default('uploads'),
   MAX_FILE_SIZE: z.string().default('5242880').transform(Number),
   RATE_LIMIT_WINDOW_MS: z.string().default('900000').transform(Number),
-  RATE_LIMIT_MAX: z.string().default('5').transform(Number),
+  RATE_LIMIT_MAX: z.string().default('100').transform(Number),
   LOG_LEVEL: z.string().default('info'),
   LOG_DIR: z.string().default('logs'),
 });

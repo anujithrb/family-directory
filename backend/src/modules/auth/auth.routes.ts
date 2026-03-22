@@ -13,6 +13,7 @@ const authRateLimiter = rateLimit({
   message: { error: { code: 'RATE_LIMITED', message: 'Too many requests' } },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => env.NODE_ENV === 'development',
 });
 
 router.post('/register', authRateLimiter, controller.register);

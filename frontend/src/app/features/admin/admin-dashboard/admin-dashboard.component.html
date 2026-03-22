@@ -1,0 +1,93 @@
+<div class="ef-page">
+  <div class="page-header">
+    <h1>Admin</h1>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button type="button"
+            class="tab-btn"
+            [class.tab-btn--active]="activeTab === 'members'"
+            (click)="activeTab = 'members'">
+      Members
+    </button>
+    <button type="button"
+            class="tab-btn"
+            [class.tab-btn--active]="activeTab === 'users'"
+            (click)="activeTab = 'users'">
+      Users
+    </button>
+  </div>
+
+  <!-- Members tab -->
+  <ng-container *ngIf="activeTab === 'members'">
+    <div class="tab-actions">
+      <a routerLink="/admin/members/new" class="ef-btn ef-btn--primary add-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add member
+      </a>
+    </div>
+
+    <div class="ef-spinner" *ngIf="loading$ | async">
+      <div class="ef-spinner__ring"></div>
+    </div>
+
+    <div class="member-list" *ngIf="!(loading$ | async)">
+      <div class="member-row ef-card" *ngFor="let m of members$ | async">
+        <div class="member-row__info">
+          <span class="member-name">{{ m.firstName }} {{ m.lastName }}</span>
+          <div class="row-badges">
+            <span class="ef-badge ef-badge--readonly">{{ m.gender | titlecase }}</span>
+            <span class="ef-badge"
+                  [class.ef-badge--active]="m.isLiving"
+                  [class.ef-badge--removed]="!m.isLiving">
+              {{ m.isLiving ? 'Living' : 'Deceased' }}
+            </span>
+          </div>
+        </div>
+        <div class="member-row__actions">
+          <a [routerLink]="['/admin/members', m.id, 'edit']" class="ef-btn ef-btn--ghost row-action-btn">Edit</a>
+          <button type="button" class="ef-btn ef-btn--danger row-action-btn" (click)="deleteMember(m.id)">Delete</button>
+        </div>
+      </div>
+
+      <p class="empty-state" *ngIf="(members$ | async)?.length === 0">No members yet.</p>
+    </div>
+  </ng-container>
+
+  <!-- Users tab -->
+  <ng-container *ngIf="activeTab === 'users'">
+    <div class="ef-spinner" *ngIf="usersLoading">
+      <div class="ef-spinner__ring"></div>
+    </div>
+
+    <div class="member-list" *ngIf="!usersLoading">
+      <div class="member-row ef-card" *ngFor="let u of users">
+        <div class="member-row__info">
+          <span class="member-name">{{ u.email }}</span>
+          <div class="row-badges">
+            <span class="ef-badge"
+                  [class.ef-badge--admin]="u.role === 'ADMIN'"
+                  [class.ef-badge--active]="u.role === 'USER'"
+                  [class.ef-badge--readonly]="u.role === 'READ_ONLY'">
+              {{ u.role | titlecase }}
+            </span>
+            <span class="ef-badge" [class.ef-badge--active]="u.isActive" [class.ef-badge--removed]="!u.isActive">
+              {{ u.isActive ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+          <span class="user-member" *ngIf="u.familyMember">
+            {{ u.familyMember.firstName }} {{ u.familyMember.lastName }}
+          </span>
+        </div>
+        <div class="member-row__actions">
+          <button type="button" class="ef-btn ef-btn--ghost row-action-btn" (click)="grantPermission(u.id)">
+            Grant permission
+          </button>
+        </div>
+      </div>
+
+      <p class="empty-state" *ngIf="users.length === 0">No users found.</p>
+    </div>
+  </ng-container>
+</div>

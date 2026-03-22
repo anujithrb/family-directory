@@ -1,14 +1,12 @@
 import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { EventsActions, CalendarEvent } from '../../../core/store/events/events.actions';
 import { selectAllEvents } from '../../../core/store/events/events.selectors';
 
-interface DayCell {
+export interface DayCell {
   date: Date;
   isCurrentMonth: boolean;
   events: CalendarEvent[];
@@ -17,69 +15,15 @@ interface DayCell {
 @Component({
   selector: 'app-calendar-view',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule],
-  template: `
-    <div class="calendar-container">
-      <div class="calendar-header">
-        <button mat-icon-button (click)="prevMonth()"><mat-icon>chevron_left</mat-icon></button>
-        <h2>{{ currentDate | date:'MMMM yyyy' }}</h2>
-        <button mat-icon-button (click)="nextMonth()"><mat-icon>chevron_right</mat-icon></button>
-      </div>
-
-      <div class="weekday-headers">
-        <div *ngFor="let day of weekDays" class="weekday">{{ day }}</div>
-      </div>
-
-      <div class="calendar-grid">
-        <div *ngFor="let cell of calendarDays$ | async"
-             class="day-cell"
-             [class.other-month]="!cell.isCurrentMonth"
-             [class.today]="isToday(cell.date)">
-          <span class="day-number">{{ cell.date | date:'d' }}</span>
-          <div class="day-events">
-            <div *ngFor="let event of cell.events" class="event-chip"
-                 [class.birthday]="event.eventType === 'BIRTHDAY'"
-                 [class.anniversary]="event.eventType === 'ANNIVERSARY'"
-                 [class.custom]="event.eventType === 'CUSTOM'"
-                 [title]="event.title">
-              {{ event.title | slice:0:20 }}{{ event.title.length > 20 ? '...' : '' }}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="legend">
-        <span class="legend-item">&#127874; Birthday</span>
-        <span class="legend-item">&#128145; Anniversary</span>
-        <span class="legend-item">&#128197; Event</span>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .calendar-container { padding: 16px; max-width: 900px; margin: 0 auto; }
-    .calendar-header { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 16px; }
-    .calendar-header h2 { margin: 0; min-width: 200px; text-align: center; }
-    .weekday-headers { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-bottom: 2px; }
-    .weekday { text-align: center; font-weight: bold; padding: 8px; font-size: 12px; color: rgba(0,0,0,0.6); }
-    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
-    .day-cell { min-height: 80px; border: 1px solid rgba(0,0,0,0.08); padding: 4px; background: white; }
-    .day-cell.other-month { background: #fafafa; opacity: 0.6; }
-    .day-cell.today .day-number { background: #1a73e8; color: white; border-radius: 50%; padding: 2px 6px; }
-    .day-number { font-size: 12px; font-weight: 500; }
-    .day-events { margin-top: 2px; }
-    .event-chip { font-size: 10px; padding: 1px 4px; border-radius: 4px; margin-bottom: 1px; overflow: hidden; white-space: nowrap; cursor: pointer; }
-    .birthday { background: #e3f2fd; color: #1565c0; }
-    .anniversary { background: #fce4ec; color: #880e4f; }
-    .custom { background: #e8f5e9; color: #2e7d32; }
-    .legend { display: flex; gap: 16px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
-    .legend-item { font-size: 12px; }
-    @media (max-width: 600px) { .day-cell { min-height: 56px; } .event-chip { display: none; } }
-  `],
+  imports: [CommonModule],
+  templateUrl: './calendar-view.component.html',
+  styleUrl: './calendar-view.component.scss',
 })
 export class CalendarViewComponent implements OnInit {
   currentDate = new Date();
   weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   calendarDays$!: Observable<DayCell[]>;
+
   private touchStartX = 0;
 
   constructor(private store: Store) {}

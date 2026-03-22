@@ -1,0 +1,61 @@
+<!-- Loading -->
+<div class="ef-spinner" *ngIf="loading$ | async">
+  <div class="ef-spinner__ring"></div>
+</div>
+
+<!-- Content -->
+<ng-container *ngIf="!(loading$ | async) && (member$ | async) as member">
+  <!-- Back bar -->
+  <div class="back-bar">
+    <a routerLink="/directory" class="back-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="back-icon"><polyline points="15 18 9 12 15 6"/></svg>
+      Directory
+    </a>
+    <a *ngIf="canEdit$ | async"
+       [routerLink]="['/admin/members', member.id, 'edit']"
+       class="ef-btn ef-btn--secondary edit-btn">
+      Edit
+    </a>
+  </div>
+
+  <!-- Hero -->
+  <div class="member-hero">
+    <img class="ef-avatar hero-avatar"
+         [src]="member.photoUrl || 'assets/icons/default-avatar.svg'"
+         [alt]="member.firstName + ' ' + member.lastName">
+    <div class="hero-info">
+      <h1 class="member-name">{{ member.firstName }} {{ member.lastName }}</h1>
+      <div class="badges">
+        <span class="ef-badge" [class.ef-badge--active]="member.isLiving" [class.ef-badge--removed]="!member.isLiving">
+          {{ member.isLiving ? 'Living' : 'Deceased' }}
+        </span>
+        <span class="gender-badge ef-badge ef-badge--readonly">{{ member.gender | titlecase }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Details card -->
+  <div class="ef-card details-card">
+    <div class="detail-row" *ngIf="member.dateOfBirth">
+      <span class="ef-label detail-label">Born</span>
+      <span class="detail-value">{{ member.dateOfBirth | date:'longDate' }}</span>
+    </div>
+    <hr class="ef-divider" *ngIf="member.dateOfBirth && member.dateOfDeath">
+    <div class="detail-row" *ngIf="member.dateOfDeath">
+      <span class="ef-label detail-label">Passed</span>
+      <span class="detail-value">{{ member.dateOfDeath | date:'longDate' }}</span>
+    </div>
+  </div>
+
+  <!-- Bio -->
+  <div class="ef-card bio-card" *ngIf="member.bio">
+    <h3 class="bio-heading">About</h3>
+    <p class="bio-text">{{ member.bio }}</p>
+  </div>
+</ng-container>
+
+<!-- Not found -->
+<div class="ef-page not-found" *ngIf="!(loading$ | async) && !(member$ | async)">
+  <p class="ef-label">Member not found</p>
+  <a routerLink="/directory" class="ef-btn ef-btn--ghost" style="margin-top: var(--ef-space-16)">Back to directory</a>
+</div>

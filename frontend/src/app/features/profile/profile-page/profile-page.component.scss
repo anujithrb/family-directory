@@ -1,0 +1,63 @@
+.profile-hero {
+  display: flex;
+  align-items: center;
+  gap: var(--ef-space-16);
+  margin-bottom: var(--ef-space-24);
+
+  .hero-avatar {
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: var(--ef-radius-pill);
+    flex-shrink: 0;
+  }
+
+  .hero-name {
+    font-size: var(--ef-text-h2);
+    font-weight: 300;
+  }
+
+  .hero-email {
+    font-size: var(--ef-text-small);
+    color: var(--ef-driftwood);
+    margin-top: 2px;
+  }
+}
+
+.info-card {
+  margin-bottom: var(--ef-space-16);
+
+  .info-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .permissions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ef-space-8);
+  }
+}
+
+.link-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--ef-space-16);
+  margin-bottom: var(--ef-space-16);
+  text-decoration: none;
+  color: var(--ef-walnut);
+  font-size: var(--ef-text-body);
+  cursor: pointer;
+  border-radius: var(--ef-radius-lg);
+  border: 0.5px solid var(--ef-fog);
+  transition: background 0.15s;
+
+  &:hover { background: var(--ef-linen); }
+}
+
+.signout-btn {
+  width: 100%;
+  margin-top: var(--ef-space-8);
+}

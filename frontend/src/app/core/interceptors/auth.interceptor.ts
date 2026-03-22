@@ -7,14 +7,12 @@ import { AuthActions } from '../store/auth/auth.actions';
 import { take } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { MatSnackBar } from '@angular/material/snack-bar';
 
 let isRefreshing = false;
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const store = inject(Store);
-  const http = inject(HttpClient);
-  const snackBar = inject(MatSnackBar);
+  const http  = inject(HttpClient);
 
   return store.select(selectAccessToken).pipe(
     take(1),
@@ -25,10 +23,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
       return next(authReq).pipe(
         catchError((error: HttpErrorResponse) => {
-          if (error.status === 0) {
-            snackBar.open("You're offline — showing cached data", 'Dismiss', { duration: 5000 });
-          }
-
           if (error.status === 401 && !isRefreshing) {
             isRefreshing = true;
             return http.post<{ data: { accessToken: string } }>(

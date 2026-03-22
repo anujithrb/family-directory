@@ -1,0 +1,61 @@
+<ng-container *ngIf="isAuthenticated$ | async; else unauthLayout">
+  <!-- Sidebar (tablet+) -->
+  <aside class="ef-sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-wordmark"><em>en</em>folder</div>
+      <div class="brand-tagline">Your family, held close.</div>
+    </div>
+    <nav>
+      <a routerLink="/directory" routerLinkActive="active">
+        <span class="nav-icon">&#9783;</span>
+        <span>Directory</span>
+      </a>
+      <a routerLink="/tree" routerLinkActive="active">
+        <span class="nav-icon">&#9674;</span>
+        <span>Family Tree</span>
+      </a>
+      <a routerLink="/calendar" routerLinkActive="active">
+        <span class="nav-icon">&#9776;</span>
+        <span>Calendar</span>
+      </a>
+      <a routerLink="/profile" routerLinkActive="active">
+        <span class="nav-icon">&#9728;</span>
+        <span>Profile</span>
+      </a>
+      <a routerLink="/admin" routerLinkActive="active"
+         *ngIf="(currentUser$ | async)?.role === 'ADMIN'">
+        <span class="nav-icon">&#9881;</span>
+        <span>Admin</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Bottom nav (mobile) -->
+  <nav class="ef-bottom-nav">
+    <a routerLink="/directory" routerLinkActive="active">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><circle cx="17" cy="9" r="3"/><path d="M21 21v-2a3 3 0 00-2-2.83"/></svg>
+      <span>Directory</span>
+    </a>
+    <a routerLink="/tree" routerLinkActive="active">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 7l-3 4M12 7l3 4M9 11v3M15 11v3M6 14h6M12 14h6M9 17v4M15 17v4"/></svg>
+      <span>Tree</span>
+    </a>
+    <a routerLink="/calendar" routerLinkActive="active">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      <span>Calendar</span>
+    </a>
+    <a routerLink="/profile" routerLinkActive="active">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <!-- Main content -->
+  <main class="ef-main">
+    <router-outlet />
+  </main>
+</ng-container>
+
+<ng-template #unauthLayout>
+  <router-outlet />
+</ng-template>

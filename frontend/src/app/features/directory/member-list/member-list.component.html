@@ -1,0 +1,60 @@
+<div class="ef-page">
+  <!-- Page header -->
+  <div class="page-header">
+    <h1>Directory</h1>
+    <a routerLink="/admin/members/new"
+       class="ef-btn ef-btn--primary add-btn"
+       *ngIf="(currentUser$ | async)?.role === 'ADMIN'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add member
+    </a>
+  </div>
+
+  <!-- Search -->
+  <div class="search-wrap ef-field">
+    <label for="search" class="ef-label">Search</label>
+    <div class="search-input-wrap">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input
+        id="search"
+        type="search"
+        [formControl]="searchControl"
+        placeholder="Search your family…"
+        autocomplete="off"
+      >
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="ef-spinner" *ngIf="loading$ | async">
+    <div class="ef-spinner__ring"></div>
+  </div>
+
+  <!-- List -->
+  <div class="member-list" *ngIf="!(loading$ | async)">
+    <a class="ef-list-item"
+       *ngFor="let member of members$ | async"
+       [routerLink]="['/directory', member.id]">
+      <img class="ef-avatar ef-avatar--lg"
+           [src]="member.photoUrl || 'assets/icons/default-avatar.svg'"
+           [alt]="member.firstName + ' ' + member.lastName">
+      <div class="ef-list-item__body">
+        <div class="ef-list-item__title">{{ member.firstName }} {{ member.lastName }}</div>
+        <div class="ef-list-item__sub">
+          <span *ngIf="member.dateOfBirth">b. {{ member.dateOfBirth | date:'y' }}</span>
+          <span class="ef-badge ef-badge--removed" *ngIf="!member.isLiving">Deceased</span>
+        </div>
+      </div>
+      <span class="ef-list-item__chevron">›</span>
+    </a>
+
+    <p class="empty-state" *ngIf="(members$ | async)?.length === 0">
+      No members found.
+    </p>
+  </div>
+
+  <!-- Count -->
+  <p class="count-label ef-label" *ngIf="total$ | async as total">
+    {{ total }} member{{ total === 1 ? '' : 's' }}
+  </p>
+</div>

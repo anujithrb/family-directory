@@ -1,0 +1,11 @@
+<div class="tree-wrapper">
+  <div class="ef-spinner tree-loading" *ngIf="loading">
+    <div class="ef-spinner__ring"></div>
+  </div>
+
+  <svg #treeSvg class="tree-svg" [class.hidden]="loading"></svg>
+
+  <div class="tree-hint" [class.hidden]="loading">
+    <span>Pan: drag &nbsp;·&nbsp; Zoom: scroll / pinch &nbsp;·&nbsp; Tap node: view profile</span>
+  </div>
+</div>

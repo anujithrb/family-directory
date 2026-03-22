@@ -1,0 +1,68 @@
+<div class="ef-page">
+  <!-- Back bar -->
+  <div class="form-back">
+    <a routerLink="/admin" class="back-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="back-icon"><polyline points="15 18 9 12 15 6"/></svg>
+      Admin
+    </a>
+  </div>
+
+  <h1>{{ isEdit ? 'Edit member' : 'Add member' }}</h1>
+  <p class="form-subtitle">{{ isEdit ? 'Update this member\'s details.' : 'Add someone to your family fold.' }}</p>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="member-form">
+    <!-- First name -->
+    <div class="ef-field">
+      <label for="firstName">First name</label>
+      <input id="firstName" type="text" formControlName="firstName" placeholder="e.g. Anujith" autocomplete="given-name">
+      <span class="ef-field__error" *ngIf="form.get('firstName')?.invalid && form.get('firstName')?.touched">
+        First name is required.
+      </span>
+    </div>
+
+    <!-- Last name -->
+    <div class="ef-field">
+      <label for="lastName">Last name</label>
+      <input id="lastName" type="text" formControlName="lastName" placeholder="e.g. Rajan" autocomplete="family-name">
+      <span class="ef-field__error" *ngIf="form.get('lastName')?.invalid && form.get('lastName')?.touched">
+        Last name is required.
+      </span>
+    </div>
+
+    <!-- Gender -->
+    <div class="ef-field">
+      <label for="gender">Gender</label>
+      <select id="gender" formControlName="gender">
+        <option value="MALE">Male</option>
+        <option value="FEMALE">Female</option>
+        <option value="OTHER">Other</option>
+      </select>
+    </div>
+
+    <!-- Date of birth -->
+    <div class="ef-field">
+      <label for="dateOfBirth">Date of birth</label>
+      <input id="dateOfBirth" type="date" formControlName="dateOfBirth">
+    </div>
+
+    <!-- Bio -->
+    <div class="ef-field">
+      <label for="bio">Biography</label>
+      <textarea id="bio" formControlName="bio" placeholder="A brief note about this person…" rows="4"></textarea>
+    </div>
+
+    <!-- Is living -->
+    <label class="toggle-row">
+      <span class="toggle-label">Currently living</span>
+      <input type="checkbox" formControlName="isLiving" class="toggle-checkbox">
+    </label>
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <a routerLink="/admin" class="ef-btn ef-btn--ghost">Cancel</a>
+      <button type="submit" class="ef-btn ef-btn--primary" [disabled]="form.invalid">
+        {{ isEdit ? 'Save changes' : 'Create member' }}
+      </button>
+    </div>
+  </form>
+</div>

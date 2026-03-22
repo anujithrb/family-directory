@@ -1,61 +1,491 @@
-@use '@angular/material' as mat;
+// ─── Enfolder Design Tokens ─────────────────────────────────────────────────
+:root {
+  // Warmth ramp
+  --ef-walnut:     #2E1A0E;
+  --ef-terra:      #A04A28;
+  --ef-clay:       #C4623A;
+  --ef-ember:      #E8845C;
+  --ef-blush:      #F2C4A8;
+
+  // Neutrals – aged paper
+  --ef-bark:       #5C3820;
+  --ef-driftwood:  #8C6448;
+  --ef-sand:       #BFA48C;
+  --ef-fog:        #D8CABB;
+  --ef-linen:      #EDE3D6;
+  --ef-parchment:  #F7EFE4;
+  --ef-white:      #FBF7F2;
+
+  // Semantic
+  --ef-gold:       #C49A3C;
+  --ef-sage:       #7A8C6E;
+  --ef-error:      #B83232;
+
+  // Typography
+  --ef-ff-display: 'Cormorant Garamond', Georgia, serif;
+  --ef-ff-body:    'Jost', system-ui, sans-serif;
+
+  // Type scale
+  --ef-text-hero:    40px;
+  --ef-text-h1:      28px;
+  --ef-text-h2:      20px;
+  --ef-text-h3:      16px;
+  --ef-text-body:    15px;
+  --ef-text-small:   13px;
+  --ef-text-caption: 12px;
+  --ef-text-label:   10px;
+
+  // Spacing
+  --ef-space-4:   4px;
+  --ef-space-8:   8px;
+  --ef-space-12:  12px;
+  --ef-space-16:  16px;
+  --ef-space-24:  24px;
+  --ef-space-32:  32px;
+  --ef-space-64:  64px;
+
+  // Border radius
+  --ef-radius-xs:   4px;   // tags, chips
+  --ef-radius-sm:   8px;   // badges, inputs
+  --ef-radius-md:   12px;  // buttons, standard
+  --ef-radius-lg:   20px;  // cards, panels
+  --ef-radius-xl:   28px;  // hero, app icon
+  --ef-radius-pill: 9999px; // avatars, pills
+}
+
+// ─── Reset & Base ────────────────────────────────────────────────────────────
+*, *::before, *::after {
+  box-sizing: border-box;
+}
 
 html, body {
   height: 100%;
   margin: 0;
-  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background: var(--ef-white);
+  color: var(--ef-walnut);
+  font-family: var(--ef-ff-body);
+  font-size: var(--ef-text-body);
+  font-weight: 400;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--ef-ff-display);
+  font-weight: 300;
+  line-height: 1.2;
+  margin: 0;
+  color: var(--ef-walnut);
+}
+
+h1 { font-size: var(--ef-text-h1); }
+h2 { font-size: var(--ef-text-h2); font-weight: 400; }
+h3 { font-size: var(--ef-text-h3); font-family: var(--ef-ff-body); font-weight: 500; }
+
+p { margin: 0; }
+
+a {
+  color: var(--ef-clay);
+  text-decoration: none;
+}
+
+input, select, textarea, button {
+  font-family: var(--ef-ff-body);
+  font-size: var(--ef-text-body);
+}
+
+// Prevent zoom on input focus on iOS
+input[type="email"],
+input[type="password"],
+input[type="text"],
+input[type="search"],
+textarea {
   font-size: 16px;
 }
 
-* {
-  box-sizing: border-box;
-}
+// ─── Safe area helpers ───────────────────────────────────────────────────────
+.safe-top    { padding-top: env(safe-area-inset-top); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
 
-.safe-area-top { padding-top: env(safe-area-inset-top); }
-.safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
+// ─── Bottom navigation (mobile-first) ────────────────────────────────────────
+.ef-bottom-nav {
+  display: flex;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: var(--ef-white);
+  border-top: 0.5px solid var(--ef-fog);
+  padding-bottom: env(safe-area-inset-bottom);
 
-button, a, [mat-button], [mat-icon-button] {
-  min-height: 44px;
-  min-width: 44px;
-}
-
-input, select, textarea {
-  font-size: 16px !important;
-}
-
-.bottom-nav {
-  display: none;
-  @media (max-width: 767px) {
+  a {
+    flex: 1;
     display: flex;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 100;
-    background: white;
-    border-top: 1px solid rgba(0,0,0,0.12);
-    padding-bottom: env(safe-area-inset-bottom);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--ef-space-8) var(--ef-space-4);
+    text-decoration: none;
+    color: var(--ef-sand);
+    font-size: var(--ef-text-label);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    min-height: 56px;
+    gap: 2px;
+    transition: color 0.15s ease;
 
-    a {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 8px 4px;
-      text-decoration: none;
-      color: rgba(0,0,0,0.6);
-      font-size: 12px;
-      min-height: 56px;
+    .nav-icon {
+      font-size: 22px;
+      line-height: 1;
+    }
 
-      &.active { color: #1a73e8; }
-      mat-icon { font-size: 24px; }
+    &.active, &:hover {
+      color: var(--ef-clay);
     }
   }
 }
 
-.content-with-bottom-nav {
-  @media (max-width: 767px) {
-    padding-bottom: calc(56px + env(safe-area-inset-bottom));
+// On wider screens show sidebar nav instead
+@media (min-width: 768px) {
+  .ef-bottom-nav {
+    display: none;
+  }
+}
+
+// ─── Page content offset ─────────────────────────────────────────────────────
+.ef-main {
+  min-height: 100dvh;
+  padding-bottom: calc(56px + env(safe-area-inset-bottom));
+
+  @media (min-width: 768px) {
+    padding-bottom: 0;
+    padding-left: 240px; // sidebar width
+  }
+}
+
+// ─── Top header ──────────────────────────────────────────────────────────────
+.ef-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--ef-white);
+  border-bottom: 0.5px solid var(--ef-fog);
+  padding: var(--ef-space-16);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: calc(var(--ef-space-16) + env(safe-area-inset-top));
+}
+
+// ─── Sidebar nav (tablet+) ───────────────────────────────────────────────────
+.ef-sidebar {
+  display: none;
+
+  @media (min-width: 768px) {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 240px;
+    background: var(--ef-white);
+    border-right: 0.5px solid var(--ef-fog);
+    padding: var(--ef-space-32) 0;
+    z-index: 200;
+
+    .sidebar-brand {
+      padding: 0 var(--ef-space-24) var(--ef-space-32);
+
+      .brand-wordmark {
+        font-family: var(--ef-ff-display);
+        font-size: 22px;
+        font-weight: 300;
+        color: var(--ef-walnut);
+
+        em {
+          font-style: italic;
+          color: var(--ef-clay);
+          font-weight: 400;
+        }
+      }
+
+      .brand-tagline {
+        font-size: var(--ef-text-caption);
+        color: var(--ef-sand);
+        margin-top: 2px;
+      }
+    }
+
+    nav {
+      flex: 1;
+
+      a {
+        display: flex;
+        align-items: center;
+        gap: var(--ef-space-12);
+        padding: var(--ef-space-12) var(--ef-space-24);
+        color: var(--ef-driftwood);
+        font-size: var(--ef-text-small);
+        font-weight: 400;
+        text-decoration: none;
+        transition: background 0.15s, color 0.15s;
+
+        .nav-icon { font-size: 20px; }
+
+        &.active, &:hover {
+          color: var(--ef-clay);
+          background: var(--ef-linen);
+        }
+
+        &.active {
+          font-weight: 500;
+        }
+      }
+    }
+  }
+}
+
+// ─── Utility: page wrapper ────────────────────────────────────────────────────
+.ef-page {
+  padding: var(--ef-space-16);
+  max-width: 680px;
+  margin: 0 auto;
+
+  @media (min-width: 768px) {
+    padding: var(--ef-space-32);
+  }
+}
+
+// ─── Buttons ─────────────────────────────────────────────────────────────────
+.ef-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ef-space-8);
+  padding: 0 var(--ef-space-24);
+  height: 44px;
+  min-width: 44px;
+  border: none;
+  border-radius: var(--ef-radius-md);
+  font-family: var(--ef-ff-body);
+  font-size: var(--ef-text-body);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, opacity 0.15s;
+  text-decoration: none;
+
+  &--primary {
+    background: var(--ef-clay);
+    color: var(--ef-parchment);
+
+    &:hover { background: var(--ef-terra); }
+    &:active { background: var(--ef-walnut); }
+  }
+
+  &--secondary {
+    background: transparent;
+    color: var(--ef-clay);
+    border: 1.5px solid var(--ef-clay);
+
+    &:hover { background: var(--ef-linen); }
+  }
+
+  &--ghost {
+    background: transparent;
+    color: var(--ef-bark);
+
+    &:hover { background: var(--ef-linen); }
+  }
+
+  &--danger {
+    background: transparent;
+    color: var(--ef-error);
+    border: 1.5px solid var(--ef-error);
+
+    &:hover { background: rgba(184, 50, 50, 0.08); }
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  &--full { width: 100%; }
+}
+
+// ─── Cards ────────────────────────────────────────────────────────────────────
+.ef-card {
+  background: var(--ef-white);
+  border: 0.5px solid var(--ef-fog);
+  border-radius: var(--ef-radius-lg);
+  padding: var(--ef-space-16);
+  overflow: hidden;
+
+  &--linen { background: var(--ef-linen); border-color: transparent; }
+  &--clay  { background: var(--ef-clay); color: var(--ef-parchment); border-color: transparent; }
+}
+
+// ─── Form fields ─────────────────────────────────────────────────────────────
+.ef-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ef-space-4);
+  margin-bottom: var(--ef-space-16);
+
+  label {
+    font-size: var(--ef-text-small);
+    font-weight: 500;
+    color: var(--ef-bark);
+  }
+
+  input, select, textarea {
+    width: 100%;
+    padding: var(--ef-space-8) var(--ef-space-16);
+    height: 44px;
+    border: 1.5px solid var(--ef-fog);
+    border-radius: var(--ef-radius-sm);
+    background: var(--ef-white);
+    color: var(--ef-walnut);
+    outline: none;
+    transition: border-color 0.15s;
+
+    &:focus { border-color: var(--ef-clay); }
+    &::placeholder { color: var(--ef-sand); }
+  }
+
+  textarea {
+    height: auto;
+    min-height: 100px;
+    padding: var(--ef-space-8) var(--ef-space-16);
+    resize: vertical;
+  }
+
+  .ef-field__error {
+    font-size: var(--ef-text-caption);
+    color: var(--ef-error);
+  }
+}
+
+// ─── Badges ──────────────────────────────────────────────────────────────────
+.ef-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--ef-space-8);
+  border-radius: var(--ef-radius-xs);
+  font-size: var(--ef-text-caption);
+  font-weight: 500;
+  font-family: var(--ef-ff-body);
+
+  &--active   { background: rgba(122, 140, 110, 0.15); color: var(--ef-sage); }
+  &--pending  { background: rgba(196, 154, 60, 0.15);  color: var(--ef-gold); }
+  &--admin    { background: rgba(122, 140, 110, 0.2);  color: var(--ef-sage); }
+  &--removed  { background: rgba(184, 50, 50, 0.12);   color: var(--ef-error); }
+  &--readonly { background: rgba(191, 164, 140, 0.2);  color: var(--ef-driftwood); }
+}
+
+// ─── Avatar ───────────────────────────────────────────────────────────────────
+.ef-avatar {
+  border-radius: var(--ef-radius-pill);
+  object-fit: cover;
+  background: var(--ef-blush);
+  flex-shrink: 0;
+
+  &--sm { width: 24px;  height: 24px; }
+  &--md { width: 36px;  height: 36px; }
+  &--lg { width: 44px;  height: 44px; }
+  &--xl { width: 72px;  height: 72px; }
+}
+
+// ─── Loading spinner ─────────────────────────────────────────────────────────
+.ef-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--ef-space-64);
+
+  &__ring {
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--ef-linen);
+    border-top-color: var(--ef-clay);
+    border-radius: 50%;
+    animation: ef-spin 0.8s linear infinite;
+  }
+}
+
+@keyframes ef-spin {
+  to { transform: rotate(360deg); }
+}
+
+// ─── Divider ──────────────────────────────────────────────────────────────────
+.ef-divider {
+  border: none;
+  border-top: 0.5px solid var(--ef-fog);
+  margin: var(--ef-space-16) 0;
+}
+
+// ─── Section label ────────────────────────────────────────────────────────────
+.ef-label {
+  font-size: var(--ef-text-label);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  color: var(--ef-sand);
+  font-family: var(--ef-ff-body);
+}
+
+// ─── Error banner ────────────────────────────────────────────────────────────
+.ef-error-banner {
+  background: rgba(184, 50, 50, 0.1);
+  color: var(--ef-error);
+  border: 0.5px solid rgba(184, 50, 50, 0.3);
+  border-radius: var(--ef-radius-sm);
+  padding: var(--ef-space-8) var(--ef-space-16);
+  font-size: var(--ef-text-small);
+  margin-bottom: var(--ef-space-16);
+}
+
+// ─── List item ────────────────────────────────────────────────────────────────
+.ef-list-item {
+  display: flex;
+  align-items: center;
+  gap: var(--ef-space-16);
+  padding: var(--ef-space-16);
+  border-bottom: 0.5px solid var(--ef-fog);
+  cursor: pointer;
+  transition: background 0.1s;
+  text-decoration: none;
+  color: inherit;
+
+  &:hover { background: var(--ef-linen); }
+
+  &__body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__title {
+    font-size: var(--ef-text-body);
+    font-weight: 500;
+    color: var(--ef-walnut);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__sub {
+    font-size: var(--ef-text-small);
+    color: var(--ef-driftwood);
+    margin-top: 2px;
+  }
+
+  &__chevron {
+    color: var(--ef-sand);
+    font-size: 18px;
+    font-style: normal;
   }
 }

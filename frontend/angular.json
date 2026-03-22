@@ -33,16 +33,12 @@
                 "glob": "**/*",
                 "input": "src/assets",
                 "output": "assets"
-              },
-              "src/manifest.webmanifest",
-              "src/ngsw-config.json"
+              }
             ],
             "styles": [
-              "@angular/material/prebuilt-themes/azure-blue.css",
               "src/styles/global.scss"
             ],
-            "scripts": [],
-            "serviceWorker": "src/ngsw-config.json"
+            "scripts": []
           },
           "configurations": {
             "production": {

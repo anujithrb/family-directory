@@ -1,0 +1,55 @@
+<div class="ef-page" *ngIf="user$ | async as user">
+  <!-- Avatar + name -->
+  <div class="profile-hero">
+    <img class="ef-avatar hero-avatar"
+         [src]="user.familyMember?.photoUrl || 'assets/icons/default-avatar.svg'"
+         [alt]="user.familyMember?.firstName || 'You'">
+    <div class="hero-text">
+      <h1 class="hero-name">
+        {{ user.familyMember?.firstName }} {{ user.familyMember?.lastName }}
+      </h1>
+      <p class="hero-email">{{ user.email }}</p>
+    </div>
+  </div>
+
+  <!-- Role & permissions -->
+  <div class="ef-card info-card">
+    <div class="info-row">
+      <span class="ef-label">Role</span>
+      <span class="ef-badge"
+            [class.ef-badge--admin]="user.role === 'ADMIN'"
+            [class.ef-badge--active]="user.role === 'USER'"
+            [class.ef-badge--readonly]="user.role === 'READ_ONLY'">
+        {{ user.role | titlecase }}
+      </span>
+    </div>
+
+    <ng-container *ngIf="user.permissions && user.permissions.length">
+      <hr class="ef-divider">
+      <span class="ef-label" style="display: block; margin-bottom: var(--ef-space-8)">Permissions</span>
+      <div class="permissions">
+        <span class="ef-badge ef-badge--readonly" *ngFor="let p of user.permissions">
+          {{ p.permissionKey }}
+        </span>
+      </div>
+    </ng-container>
+  </div>
+
+  <!-- Profile member link -->
+  <a *ngIf="user.familyMemberId"
+     [routerLink]="['/directory', user.familyMemberId]"
+     class="ef-card link-card">
+    <span>View my family profile</span>
+    <span class="ef-list-item__chevron">›</span>
+  </a>
+
+  <!-- Sign out -->
+  <button type="button" class="ef-btn ef-btn--danger signout-btn" (click)="logout()">
+    Sign out
+  </button>
+</div>
+
+<!-- Loading / unauthenticated -->
+<div class="ef-spinner" *ngIf="!(user$ | async)">
+  <div class="ef-spinner__ring"></div>
+</div>

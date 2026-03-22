@@ -1,0 +1,44 @@
+<div class="calendar-page ef-page">
+  <!-- Header -->
+  <div class="cal-header">
+    <button type="button" class="nav-btn" (click)="prevMonth()" aria-label="Previous month">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <h1 class="month-title">{{ currentDate | date:'MMMM yyyy' }}</h1>
+    <button type="button" class="nav-btn" (click)="nextMonth()" aria-label="Next month">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+  </div>
+
+  <!-- Weekday headers -->
+  <div class="weekdays">
+    <div class="weekday" *ngFor="let d of weekDays">{{ d }}</div>
+  </div>
+
+  <!-- Calendar grid -->
+  <div class="cal-grid">
+    <div class="day-cell"
+         *ngFor="let cell of calendarDays$ | async"
+         [class.other-month]="!cell.isCurrentMonth"
+         [class.today]="isToday(cell.date)">
+      <span class="day-num">{{ cell.date | date:'d' }}</span>
+      <div class="day-events">
+        <div class="event-pill"
+             *ngFor="let event of cell.events"
+             [class.event-pill--birthday]="event.eventType === 'BIRTHDAY'"
+             [class.event-pill--anniversary]="event.eventType === 'ANNIVERSARY'"
+             [class.event-pill--custom]="event.eventType === 'CUSTOM'"
+             [title]="event.title">
+          {{ event.title | slice:0:18 }}{{ event.title.length > 18 ? '…' : '' }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <span class="legend-item legend-item--birthday">Birthday</span>
+    <span class="legend-item legend-item--anniversary">Anniversary</span>
+    <span class="legend-item legend-item--custom">Event</span>
+  </div>
+</div>

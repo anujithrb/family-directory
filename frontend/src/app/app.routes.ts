@@ -38,10 +38,6 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
-    path: 'offline',
-    loadComponent: () => import('./features/pwa/offline-page/offline-page.component').then(m => m.OfflinePageComponent),
-  },
-  {
     path: '**',
     redirectTo: '/directory',
   },

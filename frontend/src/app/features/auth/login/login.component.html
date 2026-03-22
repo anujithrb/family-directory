@@ -1,0 +1,58 @@
+<div class="login-page">
+  <div class="login-hero">
+    <div class="wordmark"><em>en</em>folder</div>
+    <p class="tagline">Your family, held close.</p>
+  </div>
+
+  <div class="login-card ef-card">
+    <h2 class="card-title">Sign in</h2>
+    <p class="card-subtitle">Welcome back to your family's private space.</p>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+      <div class="ef-field">
+        <label for="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          placeholder="your@email.com"
+          autocomplete="email"
+        >
+        <span class="ef-field__error"
+              *ngIf="form.get('email')?.invalid && form.get('email')?.touched">
+          Enter a valid email address.
+        </span>
+      </div>
+
+      <div class="ef-field">
+        <label for="password">Password</label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          placeholder="••••••••"
+          autocomplete="current-password"
+        >
+        <span class="ef-field__error"
+              *ngIf="form.get('password')?.invalid && form.get('password')?.touched">
+          Password must be at least 8 characters.
+        </span>
+      </div>
+
+      <div class="ef-error-banner" *ngIf="error$ | async as error">
+        {{ error }}
+      </div>
+
+      <button
+        type="submit"
+        class="ef-btn ef-btn--primary ef-btn--full"
+        [disabled]="form.invalid || (loading$ | async)"
+      >
+        <span class="spinner" *ngIf="loading$ | async"></span>
+        <span *ngIf="!(loading$ | async)">Sign in</span>
+      </button>
+    </form>
+  </div>
+
+  <p class="login-footer">Private. Personal. Family.</p>
+</div>

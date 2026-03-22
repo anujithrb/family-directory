@@ -1,0 +1,109 @@
+.back-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--ef-space-16);
+  border-bottom: 0.5px solid var(--ef-fog);
+  position: sticky;
+  top: 0;
+  background: var(--ef-white);
+  z-index: 10;
+
+  .back-link {
+    display: flex;
+    align-items: center;
+    gap: var(--ef-space-8);
+    color: var(--ef-clay);
+    font-size: var(--ef-text-small);
+    font-weight: 500;
+    text-decoration: none;
+
+    .back-icon {
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  .edit-btn {
+    height: 36px;
+    font-size: var(--ef-text-small);
+    padding: 0 var(--ef-space-16);
+  }
+}
+
+.member-hero {
+  display: flex;
+  align-items: center;
+  gap: var(--ef-space-16);
+  padding: var(--ef-space-24) var(--ef-space-16);
+
+  .hero-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: var(--ef-radius-pill);
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  .hero-info {
+    flex: 1;
+    min-width: 0;
+
+    .member-name {
+      font-size: var(--ef-text-h1);
+      font-weight: 300;
+      word-break: break-word;
+    }
+
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--ef-space-4);
+      margin-top: var(--ef-space-8);
+    }
+  }
+}
+
+.details-card {
+  margin: 0 var(--ef-space-16) var(--ef-space-16);
+
+  .detail-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: var(--ef-space-8) 0;
+
+    .detail-label {
+      flex-shrink: 0;
+      margin-right: var(--ef-space-16);
+    }
+
+    .detail-value {
+      font-size: var(--ef-text-body);
+      color: var(--ef-bark);
+      text-align: right;
+    }
+  }
+}
+
+.bio-card {
+  margin: 0 var(--ef-space-16) var(--ef-space-24);
+
+  .bio-heading {
+    margin-bottom: var(--ef-space-8);
+  }
+
+  .bio-text {
+    font-size: var(--ef-text-body);
+    color: var(--ef-bark);
+    line-height: 1.7;
+  }
+}
+
+.not-found {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: var(--ef-space-64);
+}

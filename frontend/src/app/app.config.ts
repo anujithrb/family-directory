@@ -1,11 +1,8 @@
-import { ApplicationConfig, isDevMode } from '@angular/core';
+import { ApplicationConfig } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors, withXsrfConfiguration } from '@angular/common/http';
-import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-import { provideServiceWorker } from '@angular/service-worker';
 import { provideStore } from '@ngrx/store';
 import { provideEffects } from '@ngrx/effects';
-import { provideStoreDevtools } from '@ngrx/store-devtools';
 
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
@@ -25,7 +22,6 @@ export const appConfig: ApplicationConfig = {
       withInterceptors([authInterceptor]),
       withXsrfConfiguration({ cookieName: 'XSRF-TOKEN', headerName: 'X-XSRF-TOKEN' }),
     ),
-    provideAnimationsAsync(),
     provideStore({
       auth: authReducer,
       members: membersReducer,
@@ -33,10 +29,5 @@ export const appConfig: ApplicationConfig = {
       events: eventsReducer,
     }),
     provideEffects([AuthEffects, MembersEffects, TreeEffects, EventsEffects]),
-    provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode() }),
-    provideServiceWorker('ngsw-worker.js', {
-      enabled: !isDevMode(),
-      registrationStrategy: 'registerWhenStable:30000',
-    }),
   ],
 };

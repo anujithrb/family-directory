@@ -6,7 +6,7 @@ import { map } from 'rxjs/operators';
 import { EventsActions, CalendarEvent } from '../../../core/store/events/events.actions';
 import { selectAllEvents } from '../../../core/store/events/events.selectors';
 
-export interface DayCell {
+interface DayCell {
   date: Date;
   isCurrentMonth: boolean;
   events: CalendarEvent[];

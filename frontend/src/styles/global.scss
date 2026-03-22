@@ -38,6 +38,7 @@
   // Spacing
   --ef-space-4:   4px;
   --ef-space-8:   8px;
+  --ef-space-12:  12px;
   --ef-space-16:  16px;
   --ef-space-24:  24px;
   --ef-space-32:  32px;
@@ -225,8 +226,8 @@ textarea {
       a {
         display: flex;
         align-items: center;
-        gap: var(--ef-space-12, 12px);
-        padding: var(--ef-space-12, 12px) var(--ef-space-24);
+        gap: var(--ef-space-12);
+        padding: var(--ef-space-12) var(--ef-space-24);
         color: var(--ef-driftwood);
         font-size: var(--ef-text-small);
         font-weight: 400;

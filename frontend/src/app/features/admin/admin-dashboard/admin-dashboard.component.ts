@@ -60,7 +60,10 @@ export class AdminDashboardComponent implements OnInit {
     const key = prompt('Enter permission key:');
     if (key) {
       this.http.post(`${environment.apiBaseUrl}/users/${userId}/permissions`, { permissionKey: key })
-        .subscribe(() => this.loadUsers());
+        .subscribe({
+          next: () => this.loadUsers(),
+          error: () => alert('Failed to grant permission. Please try again.'),
+        });
     }
   }
 }
